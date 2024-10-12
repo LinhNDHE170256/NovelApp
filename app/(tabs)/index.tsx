@@ -1,11 +1,10 @@
 import { Image, StyleSheet, Platform } from 'react-native';
-import Home from '@/components/homeComponent/home';
-import Login from '@/components/authenticationComponent/login';
+import App from '@/components/app';
 
 
 export default function HomeScreen() {
   return (
-    <Home />
+    <App />
   );
 }
 

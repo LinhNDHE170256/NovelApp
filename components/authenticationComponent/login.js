@@ -1,7 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, TextInput } from 'react-native';
+import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
+    const navigate = useNavigate();
+
     return (
         <View style={styles.container}>
             {/* Background image */}
@@ -10,17 +13,17 @@ const Login = () => {
             {/* Login form */}
             <View style={styles.formContainer}>
                 <View style={styles.form}>
-                    <Text style={styles.title}>Đăng nhập</Text>
+                    <Text style={styles.title}>Login</Text>
                     <View style={styles.inputContainer}>
                         <Text style={styles.label}>Email</Text>
-                        <TextInput style={styles.input} placeholder="Email" />
+                        <TextInput style={styles.input} />
                     </View>
                     <View style={styles.inputContainer}>
-                        <Text style={styles.label}>Mật khẩu</Text>
-                        <TextInput style={styles.input} placeholder="Mật khẩu" secureTextEntry={true} />
+                        <Text style={styles.label}>Password</Text>
+                        <TextInput style={styles.input} secureTextEntry={true} />
                     </View>
                     <TouchableOpacity style={styles.button}>
-                        <Text style={styles.buttonText}>Đăng nhập</Text>
+                        <Text style={styles.buttonText}>Login</Text>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -28,7 +31,7 @@ const Login = () => {
             {/* Don't have an account? */}
             <View style={styles.footer}>
                 <Text style={styles.text}>Don't have an account?</Text>
-                <TouchableOpacity style={styles.link}>
+                <TouchableOpacity style={styles.link} onPress={() => navigate('/register')}>
                     <Text style={styles.linkText}>Register</Text>
                 </TouchableOpacity>
             </View>
@@ -36,7 +39,7 @@ const Login = () => {
             {/* Back to home page? */}
             <View style={styles.footer}>
                 <Text style={styles.text}>Back to home page?</Text>
-                <TouchableOpacity style={styles.link}>
+                <TouchableOpacity style={styles.link} onPress={() => navigate('/')}>
                     <Text style={styles.linkText}>Home</Text>
                 </TouchableOpacity>
             </View>
@@ -57,7 +60,7 @@ const styles = StyleSheet.create({
         position: 'absolute',
     },
     formContainer: {
-        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+        backgroundColor: 'rgba(255, 255, 255, 0.44)',
         padding: 16,
         borderRadius: 8,
         width: '80%',
@@ -102,12 +105,20 @@ const styles = StyleSheet.create({
     },
     text: {
         fontSize: 16,
-        color: '#333',
+        color: '#FFEA00',
+        fontWeight: 'bold'
     },
     link: {
-        fontSize: 16,
+        fontSize: 20,
         color: '#333',
         textDecorationLine: 'underline',
+        fontWeight: 'bold'
+    },
+    linkText: {
+        fontSize: 16,
+        color: '#fff',
+        textDecorationLine: 'underline',
+        fontWeight: 'bold'
     },
 });
 
