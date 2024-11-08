@@ -1,28 +1,88 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, TextInput } from 'react-native';
-import { useNavigate } from 'react-router-dom';
+import { View, Text, StyleSheet, Image, TouchableOpacity, TextInput, Alert } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import images from '../../assets/public/images.jpg';
+import * as ImagePicker from 'expo-image-picker';
+
+const pickImage = async (setAvatar) => {
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (permissionResult.granted === false) {
+        Alert.alert("Bạn cần cấp quyền truy cập vào ảnh!");
+        return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync();
+    if (!result.cancelled) {
+        setAvatar(result.uri);
+    }
+};
 
 const Register = () => {
     const [avatar, setAvatar] = useState(null);
     const [email, setEmail] = useState('');
     const [name, setName] = useState('');
     const [password, setPassword] = useState('');
-    const [phone, setPhone] = useState('');
-    const navigate = useNavigate();
+    const [confirmPassword, setConfirmPassword] = useState(''); // Thêm state cho confirmPassword
+    const navigation = useNavigation();
+
+    const handleRegister = async () => {
+        if (!email || !name || !password || !confirmPassword) {
+            Alert.alert("Thông báo", "Vui lòng điền đầy đủ thông tin!");
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            Alert.alert("Thông báo", "Mật khẩu không khớp!");
+            return;
+        }
+
+        let avatarBase64 = null;
+        if (avatar) {
+            const response = await fetch(avatar);
+            const blob = await response.blob();
+            const reader = new FileReader();
+            reader.readAsDataURL(blob);
+            reader.onloadend = () => {
+                avatarBase64 = reader.result.split(',')[1]; // Lấy phần Base64 từ data URI
+            };
+        }
+
+        try {
+            const response = await fetch('http://26.195.183.87:9999/auth/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email,
+                    username: name,
+                    password,
+                    confirmPassword, // Gửi confirmPassword đến backend
+                    avatar: avatarBase64
+                }),
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                Alert.alert("Thành công", "Đăng ký thành công!");
+                navigation.navigate('Login');
+            } else {
+                Alert.alert("Thất bại", data.message || "Đăng ký thất bại!");
+            }
+        } catch (error) {
+            console.error("Error during registration:", error);
+            Alert.alert("Lỗi", "Có lỗi xảy ra trong quá trình đăng ký!");
+        }
+    };
 
     return (
         <View style={styles.container}>
-            <Image source={{ uri: '../assets/public/loginBackground.jpg' }} style={styles.background} />
+            <Image source={require('../../assets/public/loginBackground.jpg')} style={styles.background} />
 
-            {/* Form đăng ký */}
             <View style={styles.formContainer}>
                 <View style={styles.form}>
-
-
-                    {/* avatar */}
                     <View style={styles.avatarContainer}>
-                        <TouchableOpacity>
+                        <TouchableOpacity onPress={() => pickImage(setAvatar)}>
                             <Image
                                 source={avatar ? { uri: avatar } : images}
                                 style={styles.avatar}
@@ -31,13 +91,14 @@ const Register = () => {
                         </TouchableOpacity>
                     </View>
 
-                    {/* các ô điền */}
                     <View style={styles.inputContainer}>
                         <Text style={styles.label}>Email</Text>
                         <TextInput
                             style={styles.input}
                             value={email}
                             onChangeText={setEmail}
+                            keyboardType="email-address"
+                            autoCapitalize="none"
                         />
                     </View>
                     <View style={styles.inputContainer}>
@@ -58,33 +119,31 @@ const Register = () => {
                         />
                     </View>
                     <View style={styles.inputContainer}>
-                        <Text style={styles.label}>Số điện thoại</Text>
+                        <Text style={styles.label}>Xác nhận mật khẩu</Text>
                         <TextInput
                             style={styles.input}
-                            keyboardType="phone-pad"
-                            value={phone}
-                            onChangeText={setPhone}
+                            secureTextEntry={true}
+                            value={confirmPassword}
+                            onChangeText={setConfirmPassword} // Cập nhật state cho confirmPassword
                         />
                     </View>
-                    <TouchableOpacity style={styles.button}>
+                    <TouchableOpacity style={styles.button} onPress={handleRegister}>
                         <Text style={styles.buttonText}>Đăng ký</Text>
                     </TouchableOpacity>
                 </View>
             </View>
 
-            {/* Không có tài khoản? */}
             <View style={styles.footer}>
                 <Text style={styles.text}>Đã có tài khoản?</Text>
-                <TouchableOpacity style={styles.link} onPress={() => navigate('/login')}>
-                    <Text style={styles.linkText}> Đăng nhập</Text>
+                <TouchableOpacity style={styles.link} onPress={() => navigation.navigate('Login')}>
+                    <Text style={styles.linkText}>Đăng nhập</Text>
                 </TouchableOpacity>
             </View>
 
-            {/* Quay lại trang chính? */}
             <View style={styles.footer}>
                 <Text style={styles.text}>Quay lại trang chính?</Text>
-                <TouchableOpacity style={styles.link} onPress={() => navigate('/')}>
-                    <Text style={styles.linkText}> Trang chủ</Text>
+                <TouchableOpacity style={styles.link} onPress={() => navigation.navigate('Home')}>
+                    <Text style={styles.linkText}>Trang chủ</Text>
                 </TouchableOpacity>
             </View>
         </View>
@@ -113,11 +172,6 @@ const styles = StyleSheet.create({
     },
     form: {
         padding: 16,
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        marginBottom: 16,
     },
     avatarContainer: {
         alignItems: 'center',
@@ -156,30 +210,31 @@ const styles = StyleSheet.create({
     buttonText: {
         fontSize: 16,
         color: '#fff',
+        fontWeight: 'bold',
+        textAlign: 'center',
     },
     footer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: 16,
-        fontWeight: 'bold'
     },
     text: {
         fontSize: 16,
         color: '#FFEA00',
-        fontWeight: 'bold'
+        fontWeight: 'bold',
     },
     link: {
         fontSize: 20,
         color: '#fff',
         textDecorationLine: 'underline',
-        fontWeight: 'bold'
+        fontWeight: 'bold',
     },
     linkText: {
         fontSize: 16,
         color: '#fff',
         textDecorationLine: 'underline',
-        fontWeight: 'bold'
+        fontWeight: 'bold',
     },
 });
 

@@ -1,14 +1,53 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, TextInput } from 'react-native';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity, TextInput, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
 
-const Login = () => {
-    const navigate = useNavigate();
+const Login = ({ onLoginSuccess }) => {
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const navigation = useNavigation();
+
+    const handleLogin = async () => {
+        if (!username || !password) {
+            Alert.alert('Thông báo', 'Vui lòng điền đầy đủ thông tin');
+            return;
+        }
+
+        try {
+            const response = await fetch('http://26.195.183.87:9999/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username, password }),
+            });
+
+            const data = await response.json();
+            console.log(data);
+
+            if (response.ok) {
+                // Lưu ID và tên người dùng vào AsyncStorage
+                await AsyncStorage.setItem('userId', data.user.id); // Lưu ID
+                await AsyncStorage.setItem('username', data.user.username); // Lưu tên người dùng
+                await AsyncStorage.setItem('role', data.user.role); // Lưu tên người dùng
+
+                onLoginSuccess(data.user); // Nếu bạn có hàm xử lý đăng nhập thành công
+                navigation.navigate('Home'); // Chuyển đến trang chính sau khi đăng nhập
+            } else {
+                Alert.alert('Đăng nhập không thành công', data.message);
+            }
+        } catch (error) {
+            console.error('Lỗi kết nối đến server:', error);
+            Alert.alert('Lỗi', 'Không thể kết nối đến server');
+        }
+    };
+
 
     return (
         <View style={styles.container}>
             {/* Background image */}
-            <Image source={{ uri: '../assets/public/loginBackground.jpg' }} style={styles.background} />
+            <Image source={require('../../assets/public/loginBackground.jpg')} style={styles.background} />
 
             {/* Login form */}
             <View style={styles.formContainer}>
@@ -16,13 +55,24 @@ const Login = () => {
                     <Text style={styles.title}>Login</Text>
                     <View style={styles.inputContainer}>
                         <Text style={styles.label}>Email</Text>
-                        <TextInput style={styles.input} />
+                        <TextInput
+                            style={styles.input}
+                            value={username}
+                            onChangeText={setUsername}
+                            placeholder="username"
+                        />
                     </View>
                     <View style={styles.inputContainer}>
                         <Text style={styles.label}>Password</Text>
-                        <TextInput style={styles.input} secureTextEntry={true} />
+                        <TextInput
+                            style={styles.input}
+                            value={password}
+                            onChangeText={setPassword}
+                            secureTextEntry={true}
+                            placeholder="password"
+                        />
                     </View>
-                    <TouchableOpacity style={styles.button}>
+                    <TouchableOpacity style={styles.button} onPress={handleLogin}>
                         <Text style={styles.buttonText}>Login</Text>
                     </TouchableOpacity>
                 </View>
@@ -31,7 +81,7 @@ const Login = () => {
             {/* Don't have an account? */}
             <View style={styles.footer}>
                 <Text style={styles.text}>Don't have an account?</Text>
-                <TouchableOpacity style={styles.link} onPress={() => navigate('/register')}>
+                <TouchableOpacity style={styles.link} onPress={() => navigation.navigate('Register')}>
                     <Text style={styles.linkText}>Register</Text>
                 </TouchableOpacity>
             </View>
@@ -39,7 +89,7 @@ const Login = () => {
             {/* Back to home page? */}
             <View style={styles.footer}>
                 <Text style={styles.text}>Back to home page?</Text>
-                <TouchableOpacity style={styles.link} onPress={() => navigate('/')}>
+                <TouchableOpacity style={styles.link} onPress={() => navigation.navigate('Home')}>
                     <Text style={styles.linkText}>Home</Text>
                 </TouchableOpacity>
             </View>
@@ -106,19 +156,19 @@ const styles = StyleSheet.create({
     text: {
         fontSize: 16,
         color: '#FFEA00',
-        fontWeight: 'bold'
+        fontWeight: 'bold',
     },
     link: {
         fontSize: 20,
         color: '#333',
         textDecorationLine: 'underline',
-        fontWeight: 'bold'
+        fontWeight: 'bold',
     },
     linkText: {
         fontSize: 16,
         color: '#fff',
         textDecorationLine: 'underline',
-        fontWeight: 'bold'
+        fontWeight: 'bold',
     },
 });
 

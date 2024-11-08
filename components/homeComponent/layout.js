@@ -1,30 +1,70 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, FlatList, ScrollView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity, FlatList } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import axios from 'axios';
+
+const imageSources = [
+    require('../../assets/novel/1.jpg'),
+    require('../../assets/novel/2.jpg'),
+    require('../../assets/novel/3.jpg'),
+    require('../../assets/novel/4.jpg'),
+    require('../../assets/novel/5.jpg'),
+    require('../../assets/novel/6.jpg'),
+    require('../../assets/novel/7.jpg'),
+    require('../../assets/novel/8.jpg'),
+    require('../../assets/novel/9.jpg'),
+    require('../../assets/novel/10.jpg'),
+    require('../../assets/novel/11.jpg'),
+    require('../../assets/novel/12.jpg'),
+];
 
 const HomeContent = () => {
-    const categories = [
-        { id: 1, name: 'Truyện tình cảm' },
-        { id: 2, name: 'Truyện phiêu lưu' },
-        { id: 3, name: 'Truyện khoa học' },
-        { id: 4, name: 'Truyện hài' },
-        { id: 5, name: 'Truyện kinh dị' },
-        { id: 6, name: 'Truyện khác' },
-    ];
+    const navigation = useNavigation();
+    const [novels, setNovels] = useState([]);
+    const [categories, setCategories] = useState([]);
 
-    const stories = [
-        { id: 1, name: 'Truyện 1', image: '../assets/public/images.jpg' },
-        { id: 2, name: 'Truyện 2', image: '../assets/public/images.jpg' },
-        { id: 3, name: 'Truyện 3', image: '../assets/public/images.jpg' },
-        { id: 4, name: 'Truyện 4', image: '../assets/public/images.jpg' },
-        { id: 5, name: 'Truyện 5', image: '../assets/public/images.jpg' },
-        { id: 6, name: 'Truyện 6', image: '../assets/public/images.jpg' },
-    ];
+    useEffect(() => {
+        const fetchNovels = async () => {
+            try {
+                const response = await axios.get('http://26.195.183.87:9999/novel/get-novel');
+                console.log("Novels fetched:", response.data);
+                setNovels(response.data);
+            } catch (error) {
+                console.error("Error fetching novels:", error);
+            }
+        };
+
+        const fetchCategories = async () => {
+            try {
+                const response = await axios.get('http://26.195.183.87:9999/category/get-all');
+                setCategories(response.data.data);
+            } catch (error) {
+                console.error("Error fetching categories:", error);
+            }
+        };
+
+        fetchNovels();
+        fetchCategories();
+    }, []);
+
+    const getRandomCategories = () => {
+        const shuffled = categories.sort(() => 0.5 - Math.random());
+        return shuffled.slice(0, 6);
+    };
+
+    const getRandomNovels = (data) => {
+        const shuffled = data.sort(() => 0.5 - Math.random());
+        return shuffled.slice(0, 6);
+    };
+
+    const handleNovelPress = (novel) => {
+        navigation.navigate('Novel', { novel });
+    };
 
     return (
-        <ScrollView style={styles.container}>
-
-            <Image source={{ uri: '../assets/public/images.jpg' }} style={styles.banner} />
+        <View style={styles.container}>
+            <Image source={{ uri: 'http://your-banner-url.com/banner.jpg' }} style={styles.banner} />
 
             <View style={styles.icons}>
                 <TouchableOpacity style={styles.icon}>
@@ -41,70 +81,73 @@ const HomeContent = () => {
                 </TouchableOpacity>
             </View>
 
-            <View style={styles.carousel}>
-                <FlatList
-                    horizontal
-                    data={stories}
-                    renderItem={({ item }) => (
-                        <Image source={{ uri: item.image }} style={styles.carouselImage} />
-                    )}
-                    keyExtractor={(item) => item.id.toString()}
-                />
-            </View>
-
             <View style={styles.categories}>
                 <FlatList
-                    data={categories}
+                    data={getRandomCategories()}
                     renderItem={({ item }) => (
                         <TouchableOpacity style={styles.category}>
                             <Text style={styles.categoryText}>{item.name}</Text>
                         </TouchableOpacity>
                     )}
-                    keyExtractor={(item) => item.id.toString()}
+                    keyExtractor={(item) => item._id}
                     numColumns={2}
                 />
             </View>
 
             <Text style={styles.title}>Truyện đề cử</Text>
             <FlatList
-                data={stories}
-                renderItem={({ item }) => (
-                    <View style={styles.story}>
-                        <Image source={{ uri: item.image }} style={styles.storyImage} />
-                        <Text style={styles.storyText}>{item.name}</Text>
-                    </View>
-                )}
-                keyExtractor={(item) => item.id.toString()}
+                data={getRandomNovels(novels)}
+                renderItem={({ item }) => {
+                    const imageNumber = item.cover_image.replace('ava', '');
+                    const imageSource = imageSources[parseInt(imageNumber) - 1];
+
+                    return (
+                        <TouchableOpacity style={styles.story} onPress={() => handleNovelPress(item)}>
+                            <Image source={imageSource} style={styles.storyImage} />
+                            <Text style={styles.storyText}>{item.title}</Text>
+                        </TouchableOpacity>
+                    );
+                }}
+                keyExtractor={(item) => item._id}
                 numColumns={3}
             />
 
             <Text style={styles.title}>Truyện mới cập nhật</Text>
             <FlatList
-                data={stories}
-                renderItem={({ item }) => (
-                    <View style={styles.story}>
-                        <Image source={{ uri: item.image }} style={styles.storyImage} />
-                        <Text style={styles.storyText}>{item.name}</Text>
-                    </View>
-                )}
-                keyExtractor={(item) => item.id.toString()}
+                data={getRandomNovels(novels)}
+                renderItem={({ item }) => {
+                    const imageNumber = item.cover_image.replace('ava', '');
+                    const imageSource = imageSources[parseInt(imageNumber) - 1];
+
+                    return (
+                        <TouchableOpacity style={styles.story} onPress={() => handleNovelPress(item)}>
+                            <Image source={imageSource} style={styles.storyImage} />
+                            <Text style={styles.storyText}>{item.title}</Text>
+                        </TouchableOpacity>
+                    );
+                }}
+                keyExtractor={(item) => item._id}
                 numColumns={3}
             />
 
             <Text style={styles.title}>Truyện đã hoàn thành</Text>
             <FlatList
-                data={stories}
-                renderItem={({ item }) => (
-                    <View style={styles.story}>
-                        <Image source={{ uri: item.image }} style={styles.storyImage} />
-                        <Text style={styles.storyText}>{item.name}</Text>
-                    </View>
-                )}
-                keyExtractor={(item) => item.id.toString()}
+                data={getRandomNovels(novels)}
+                renderItem={({ item }) => {
+                    const imageNumber = item.cover_image.replace('ava', '');
+                    const imageSource = imageSources[parseInt(imageNumber) - 1];
+
+                    return (
+                        <TouchableOpacity style={styles.story} onPress={() => handleNovelPress(item)}>
+                            <Image source={imageSource} style={styles.storyImage} />
+                            <Text style={styles.storyText}>{item.title}</Text>
+                        </TouchableOpacity>
+                    );
+                }}
+                keyExtractor={(item) => item._id}
                 numColumns={3}
             />
-
-        </ScrollView>
+        </View>
     );
 };
 
@@ -132,9 +175,6 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         borderRadius: 8,
     },
-    carousel: {
-        padding: 16,
-    },
     categories: {
         padding: 16,
     },
@@ -159,6 +199,7 @@ const styles = StyleSheet.create({
     story: {
         width: '33.33%',
         padding: 8,
+        alignItems: 'center', // Center align text under the image
     },
     storyImage: {
         width: 100,
@@ -166,8 +207,8 @@ const styles = StyleSheet.create({
         resizeMode: 'cover',
     },
     storyText: {
-        fontSize: 16,
-        color: '#333',
+        fontSize: 13,
+        color: '#333'
     },
 });
 

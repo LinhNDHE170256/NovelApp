@@ -1,20 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, FlatList, ScrollView } from 'react-native';
+import { useRoute, useNavigation } from '@react-navigation/native';
 
-const Noovel = () => {
-    const [activeTab, setActiveTab] = useState('detail'); // Mặc định là tab Detail
+const imageSources = [
+    require('../../assets/novel/1.jpg'),
+    require('../../assets/novel/2.jpg'),
+    require('../../assets/novel/3.jpg'),
+    require('../../assets/novel/4.jpg'),
+    require('../../assets/novel/5.jpg'),
+    require('../../assets/novel/6.jpg'),
+    require('../../assets/novel/7.jpg'),
+    require('../../assets/novel/8.jpg'),
+    require('../../assets/novel/9.jpg'),
+    require('../../assets/novel/10.jpg'),
+    require('../../assets/novel/11.jpg'),
+    require('../../assets/novel/12.jpg'),
+];
 
-    const categories = [
-        { id: 1, name: 'Thể loại 1' },
-        { id: 2, name: 'Thể loại 2' },
-        { id: 3, name: 'Thể loại 3' },
-    ];
+const Novel = () => {
+    const route = useRoute();
+    const { novel } = route.params;
+    const navigation = useNavigation();
+    const [activeTab, setActiveTab] = useState('detail');
+    const [relatedStories, setRelatedStories] = useState([]);
 
-    const relatedStories = [
-        { id: 1, name: 'Truyện liên quan 1', image: '../assets/public/images.jpg' },
-        { id: 2, name: 'Truyện liên quan 2', image: '../assets/public/images.jpg' },
-        { id: 3, name: 'Truyện liên quan 3', image: '../assets/public/images.jpg' },
-    ];
+    useEffect(() => {
+        const randomRelatedStories = () => {
+            const shuffled = [...Array(10).keys()].map(index => ({
+                id: index + 1,
+                name: `Truyện liên quan ${index + 1}`,
+                image: (index % 10) + 1,
+            }));
+            setRelatedStories(shuffled.sort(() => Math.random() - 0.5).slice(0, 3));
+        };
+        randomRelatedStories();
+    }, []);
 
     const chapters = [
         { id: 1, name: 'Chap 1' },
@@ -24,14 +44,18 @@ const Noovel = () => {
         { id: 5, name: 'Chap 5' },
     ];
 
+    // Lấy chỉ số từ cover_image, ví dụ cover_image: "ava1" thì chỉ số là 0
+    const getImageSource = (coverImage) => {
+        const imageIndex = coverImage ? parseInt(coverImage.replace('ava', '')) - 1 : 0;
+        return imageSources[imageIndex];
+    };
+
     return (
         <ScrollView style={styles.container}>
-
             <View style={styles.bannerContainer}>
-                <Image source={{ uri: '../assets/public/images.jpg' }} style={styles.bannerBackground} />
-                <Text style={styles.storyTitle}>Tên truyện </Text>
+                <Image source={getImageSource(novel.cover_image)} style={styles.bannerBackground} />
+                <Text style={styles.storyTitle}>{novel.title}</Text>
             </View>
-
 
             <View style={styles.tabContainer}>
                 <TouchableOpacity
@@ -51,29 +75,15 @@ const Noovel = () => {
             {activeTab === 'detail' ? (
                 <>
                     <View style={styles.infoSection}>
-                        <FlatList
-                            data={categories}
-                            renderItem={({ item }) => (
-                                <TouchableOpacity style={styles.category}>
-                                    <Text style={styles.categoryText}>{item.name}</Text>
-                                </TouchableOpacity>
-                            )}
-                            keyExtractor={(item) => item.id.toString()}
-                            horizontal
-                        />
+                        <Text style={styles.description}>{novel.description || "Mô tả truyện..."}</Text>
                     </View>
-
-                    <View style={styles.infoSection}>
-                        <Text style={styles.description}>Mô tả</Text>
-                    </View>
-
 
                     <Text style={styles.sectionTitle}>Truyện liên quan</Text>
                     <FlatList
                         data={relatedStories}
                         renderItem={({ item }) => (
                             <View style={styles.relatedStory}>
-                                <Image source={{ uri: item.image }} style={styles.storyImage} />
+                                <Image source={imageSources[item.image - 1]} style={styles.storyImage} />
                                 <Text style={styles.storyText}>{item.name}</Text>
                             </View>
                         )}
@@ -83,7 +93,6 @@ const Noovel = () => {
                 </>
             ) : (
                 <View style={styles.infoSection}>
-
                     <View style={styles.chapterHeader}>
                         <View style={styles.line} />
                         <Text style={styles.sectionTitle}>Danh sách chương</Text>
@@ -93,7 +102,10 @@ const Noovel = () => {
                     <FlatList
                         data={chapters}
                         renderItem={({ item }) => (
-                            <TouchableOpacity style={styles.category}>
+                            <TouchableOpacity
+                                style={styles.category}
+                                onPress={() => navigation.navigate('Chapter', { novel: novel.title, novelId: novel._id })}
+                            >
                                 <Text style={styles.categoryText}>{item.name}</Text>
                             </TouchableOpacity>
                         )}
@@ -205,4 +217,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default Noovel;
+export default Novel;
